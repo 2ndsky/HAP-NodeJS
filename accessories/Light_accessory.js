@@ -1,5 +1,6 @@
 // HomeKit types required
-var types = require("./types.js")
+var types = require("./types.js");
+var eibd = require("eibd");
 var exports = module.exports = {};
 
 var execute = function(accessory,characteristic,value){ console.log("executed accessory: " + accessory + ", and characteristic: " + characteristic + ", with value: " +  value + "."); }
@@ -75,7 +76,25 @@ exports.accessory = {
 		designedMaxLength: 255   
     },{
     	cType: types.POWER_STATE_CTYPE,
-    	onUpdate: function(value) { console.log("Change:",value); execute("Test Accessory 1", "light service", value); },
+    	onUpdate: function(value) {
+            console.log("Change Power State",value); 
+            execute("Test Accessory 1", "light service", value); 
+            var groupswrite = new eibd.Connection();
+            groupswrite.socketRemote({ host: '192.168.178.22', port: 6720 }, function() {
+                var dest = eibd.str2addr('1/1/45');
+                groupswrite.openTGroup(dest, 1, function(err) {
+                    if (err) {
+                        console.error("[ERROR] openTGroup:" + err);
+                    } else {
+                        groupswrite.sendAPDU([0, 0x80 | value], function(err) {
+                            if (err) {
+                                console.error("[ERROR] sendAPDU: " + err);
+                            }
+                        });
+                    }
+                });
+            });
+        },
     	perms: ["pw","pr","ev"],
 		format: "bool",
 		initialValue: false,
