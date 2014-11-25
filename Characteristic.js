@@ -22,6 +22,7 @@ function Characteristic(options, onUpdate) {
 	this.bonjourEnabled = false;
 
 	this.subscribedPeers = {};
+    this.client = null;
 
 	this.onUpdate = onUpdate;
 }
@@ -30,8 +31,14 @@ Characteristic.prototype = {
 	updateCharacteristicValue: function updateCharacteristicValue(value, peer) {
 		this.value = value;
 		this.updateValue(value, peer);
-		if (this.onUpdate !== null) {
-			this.onUpdate(value);
+        if (this.onUpdate !== null) {
+            if (typeof this.onUpdate == 'string' || this.onUpdate instanceof String) {
+                if (this.client !== null) {
+                    this.client.updateValue(this.onUpdate, value);
+                }
+            } else {
+                this.onUpdate(value);
+            }
 		} else {
 			console.log("Update:",value);
 		}
@@ -93,7 +100,10 @@ Characteristic.prototype = {
 	},
 	valueForUpdate: function valueForUpdate() {
 		return this.value;
-	}
+	},
+    setClient: function setClient(client) {
+        this.client = client;
+    }
 }
 
 module.exports = {
